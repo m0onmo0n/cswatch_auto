@@ -1,8 +1,0 @@
-2025-09-16 10:00:26,677 - PrepWorker - INFO - Prep worker started.
-2025-09-16 10:00:26,678 - RecordWorker - INFO - Record worker started.
-2025-09-16 10:00:26,678 - PrepWorker - ERROR - Prep worker configuration error: 'Paths'
-2025-09-16 10:00:26,678 - UploadWorker - INFO - Upload worker started.
-2025-09-16 10:00:26,678 - MainThread - INFO - Starting web server on http://localhost:5001
-2025-09-16 10:00:26,678 - RecordWorker - ERROR - Record worker configuration error: 'OBS'
-2025-09-16 10:00:26,678 - UploadWorker - ERROR - Upload worker configuration error: 'Paths'
-2025-09-16 10:00:26,678 - MainThread - INFO - results.json not found. Starting with empty results.
