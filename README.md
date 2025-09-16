@@ -59,10 +59,12 @@ cswatch_auto/
 > All BATs inside scripts\ include a repo-root resolver, so they work when called from anywhere.
 
 ---
-## How to download:
-you're gonna need to use either powershell or the app "terminal" located [here](https://github.com/microsoft/terminal)
-To download, you'll need to clone it from github, easiest way is by using the desktop github app (`winget install GitHub.GitHubDesktop` or `https://gitforwindows.org/` )
-then you need to clone the repo (`https://github.com/m0onmo0n/cswatch_auto` into a folder named `cswatch_auto`) and you're done.
+> [!IMPORTANT]
+> ## How to download:
+> you're gonna need to use either powershell or the app "terminal" located [here](https://github.com/microsoft/terminal)
+> To download, you'll need to clone it from github, easiest way is by using the desktop github app (`winget install GitHub.GitHubDesktop` or `https://gitforwindows.org/` )
+> then you need to clone the repo (`https://github.com/m0onmo0n/cswatch_auto` into a folder named `cswatch_auto`) and you're done.
+
 ## First-time setup (Windows)
 
 1. **Open the wizard**
