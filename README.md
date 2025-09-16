@@ -61,8 +61,8 @@ cswatch_auto/
 ---
 ## How to download:
 you're gonna need to use either powershell or the app "terminal" located [here](https://github.com/microsoft/terminal)
-To download, you need "git" installed(`winget install git.git`)
-then you need to clone the repo (`git clone https://github.com/m0onmo0n/cswatch_auto.git cswatch_auto`) and you're done, make sure to do this command in the area you want the folder structure/repo to live; i.e wherever you do this command at is where the folder and repo will live(so please go into your documents or secondary harddrive to do it and not your system32 directory)
+To download, you'll need to clone it from github, easiest way is by using the desktop github app (`winget install GitHub.GitHubDesktop` or `https://gitforwindows.org/` )
+then you need to clone the repo (`https://github.com/m0onmo0n/cswatch_auto` into a folder named `cswatch_auto`) and you're done.
 ## First-time setup (Windows)
 
 1. **Open the wizard**
