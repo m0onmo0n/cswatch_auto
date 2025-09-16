@@ -1,0 +1,4 @@
+[submodule "d2v_single"]
+	path = d2v_single
+	url = https://github.com/m0onmo0n/d2v_single.git
+	branch = main
