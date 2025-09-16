@@ -2,3 +2,7 @@
 	path = d2v_single
 	url = https://github.com/m0onmo0n/d2v_single.git
 	branch = main
+[submodule "csdm-fork"]
+	path = csdm-fork
+	url = https://github.com/m0onmo0n/csdm-fork.git
+	branch = main
