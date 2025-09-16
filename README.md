@@ -10,7 +10,7 @@ This repo also bundles obs portable.
 pre-requisites to use this project are steam and cs2, everything else gets installed*.
 
 note: my plan was to package obs portable with the rest of the project, but the size is too great for github; thus i cannot.
-The dependency installer will install obs normally, most likely in the normal programfiles if it dosen't detect obs installed in the obs folder.
+The dependency installer will install obs normally, most likely in the normal programfiles if it dosen't detect obs installed in the `obs` folder.
 
 ## Project layout
 ```
