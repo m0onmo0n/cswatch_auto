@@ -4,7 +4,6 @@ title Demo2Video Launcher
 
 set "ROOT=%~dp0"
 for %%I in ("%ROOT%") do set "ROOT=%%~fI"
-set "RUNNER=%ROOT%scripts\run.bat"
 set "LEG_MULTI=%ROOT%run_multi.bat"
 set "LEG_SINGLE=%ROOT%run_single.bat"
 
@@ -23,18 +22,14 @@ set "sel=%errorlevel%"
 if "%sel%"=="3" goto :end
 
 if "%sel%"=="1" (
-  if exist "%RUNNER%" (
-    start "D2V Multi (runner)"  /D "%ROOT%" cmd /k call "%RUNNER%" multi
-  ) else if exist "%LEG_MULTI%" (
-    start "D2V Multi (legacy)"  /D "%ROOT%" cmd /k call "%LEG_MULTI%"
+  if exist "%LEG_MULTI%" (
+    start "D2V Multi (runner)"  /D "%ROOT%" cmd /k call "%LEG_MULTI%" multi
   ) else (
     echo [ERROR] Missing scripts\run.bat and run_multi.bat & pause
   )
 ) else if "%sel%"=="2" (
-  if exist "%RUNNER%" (
-    start "D2V Single (runner)" /D "%ROOT%" cmd /k call "%RUNNER%" single
-  ) else if exist "%LEG_SINGLE%" (
-    start "D2V Single (legacy)" /D "%ROOT%" cmd /k call "%LEG_SINGLE%"
+  if exist "%LEG_SINGLE%" (
+    start "D2V Single (runner)" /D "%ROOT%" cmd /k call "%LEG_SINGLE%" single
   ) else (
     echo [ERROR] Missing scripts\run.bat and run_single.bat & pause
   )
