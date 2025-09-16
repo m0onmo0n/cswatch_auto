@@ -1,0 +1,30 @@
+@echo off
+CLS
+echo =================================================================
+echo == CS Demo Processor - Application Launcher                  ==
+echo =================================================================
+echo.
+echo This script will start all the necessary components for the application.
+echo Please ensure you have already run install.bat and setup_youtube_auth.py
+echo.
+
+:: --- Start the CSDM Node.js development server ---
+echo [1/3] Starting the CS Demo Manager dev server...
+start "CSDM Dev Server" cmd /c "cd csdm-fork && node scripts/develop-cli.mjs"
+
+:: --- Start the main Python application (web server and worker) ---
+echo [2/3] Starting the main Python application...
+start "CS Demo Processor" python main.py
+
+:: --- Wait for the server to initialize ---
+echo [3/3] Waiting 5 seconds for the web server to start...
+timeout /t 5 /nobreak > nul
+
+:: --- Open the web interface in the default browser ---
+echo Launching web interface in your browser...
+start http://localhost:5001
+
+echo.
+echo =================================================================
+echo == Application is running. You can close this window.        ==
+echo =================================================================

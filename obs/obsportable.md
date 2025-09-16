@@ -1,0 +1,2 @@
+You can download obs as a .zip file [here](https://obsproject.com/download), extract it into the obs folder and make an empty txt file named "portable_mode.txt"
+this will have that obs instance in portable mode(meaning you could do this with obs on a usb stick and the settings wouldn't change between computers as all settings etc live within this directory tree)

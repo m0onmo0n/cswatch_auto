@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon Moon's Demo2Video</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Moon Moon's Processing Plant</h1>
+
+        <!-- UPDATED: Status grid for all three workers -->
+        <div class="status-grid">
+            <div class="status-box">
+                <h2>Prep Stage</h2>
+                <p><strong>Status:</strong> <span id="status-prep">Idle</span></p>
+                <p><strong>Step:</strong> <span id="step-prep">Waiting...</span></p>
+            </div>
+            <div class="status-box">
+                <h2>Record Stage</h2>
+                <p><strong>Status:</strong> <span id="status-record">Idle</span></p>
+                <p><strong>Step:</strong> <span id="step-record">Waiting...</span></p>
+            </div>
+            <div class="status-box">
+                <h2>Upload Stage</h2>
+                <p><strong>Status:</strong> <span id="status-upload">Idle</span></p>
+                <p><strong>Step:</strong> <span id="step-upload">Waiting...</span></p>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <div class="form-container">
+                <h2>Add New Demo</h2>
+                <form id="demo-form">
+                    <input type="text" id="share_code" name="share_code" placeholder="Enter Share Code" required>
+                    <input type="text" id="suspect_steam_id" name="suspect_steam_id" placeholder="Enter Suspect's Steam64 ID" required>
+                    <input type="text" id="submitted_by" name="submitted_by" placeholder="Your Name" required>
+                    <button type="submit">Add to Queue</button>
+                </form>
+                <p id="form-message"></p>
+            </div>
+
+            <div class="form-container">
+                <h2>Bulk Add Demos</h2>
+                <form id="bulk-form">
+                    <textarea id="bulk_data" name="bulk_data" rows="5" placeholder="Paste jobs here, one per line.&#10;Format: Share Code, Steam64 ID, Your Name"></textarea>
+                    <button type="submit">Add Bulk to Queue</button>
+                </form>
+                <p id="bulk-form-message"></p>
+            </div>
+        </div>
+        
+        <!-- UPDATED: Queues grid -->
+        <div class="queues-grid">
+            <div class="queue-container">
+                <h2>Prep Queue (<span id="queue-prep-count">0</span>)</h2>
+                <ul id="queue-prep-list"></ul>
+            </div>
+            <div class="queue-container">
+                <h2>Record Queue (<span id="queue-record-count">0</span>)</h2>
+                <ul id="queue-record-list"></ul>
+            </div>
+            <div class="queue-container">
+                <h2>Upload Queue (<span id="queue-upload-count">0</span>)</h2>
+                <ul id="queue-upload-list"></ul>
+            </div>
+        </div>
+
+        <div class="results-container">
+            <h2>Completed Jobs</h2>
+            <table id="results-table">
+                <thead>
+                    <tr>
+						<th>Timestamp</th>
+                        <th>Suspect Steam64 ID</th>
+                        <th>Share Code</th>
+                        <th>Submitted By</th>
+                        <th>YouTube Link</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function renderQueue(queueId, countId, data) {
+            const list = document.getElementById(queueId);
+            const count = document.getElementById(countId);
+            list.innerHTML = '';
+            count.textContent = data.length;
+            if (data.length === 0) {
+                list.innerHTML = '<li>Queue is empty.</li>';
+            } else {
+                data.forEach(job => {
+                    const li = document.createElement('li');
+                    li.textContent = `Suspect: ${job.suspect_steam_id}`;
+                    list.appendChild(li);
+                });
+            }
+        }
+		async function retryUpload(steamId) {
+    try {
+        const response = await fetch('/retry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ steam_id: steamId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`Retry triggered for Steam ID: ${steamId}`);
+            alert(`Retry started for Steam ID: ${steamId}`);
+        } else {
+            console.error('Retry failed:', data.message);
+            alert(`Retry failed: ${data.message}`);
+        }
+    } catch (err) {
+        console.error('Retry request error:', err);
+        alert('Retry request failed. See console for details.');
+    }
+}
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                // Update status boxes
+                document.getElementById('status-prep').textContent = data.status_prep.status;
+                document.getElementById('step-prep').textContent = data.status_prep.step;
+                document.getElementById('status-record').textContent = data.status_record.status;
+                document.getElementById('step-record').textContent = data.status_record.step;
+                document.getElementById('status-upload').textContent = data.status_upload.status;
+                document.getElementById('step-upload').textContent = data.status_upload.step;
+
+                // Update queues
+                renderQueue('queue-prep-list', 'queue-prep-count', data.queue_prep);
+                renderQueue('queue-record-list', 'queue-record-count', data.queue_record);
+                renderQueue('queue-upload-list', 'queue-upload-count', data.queue_upload);
+
+				// Update results table
+				const resultsBody = document.getElementById('results-body');
+				resultsBody.innerHTML = ''; 
+				if (data.results && data.results.length > 0) {
+					data.results.forEach(result => {
+						const row = resultsBody.insertRow(0);
+						const cell1 = row.insertCell(0);
+						const cell2 = row.insertCell(1);
+						const cell3 = row.insertCell(2);
+						const cell4 = row.insertCell(3);
+						const cell5 = row.insertCell(4);
+
+						cell1.textContent = result.timestamp;
+						cell2.textContent = result.suspect_steam_id;
+						cell3.textContent = result.share_code;
+						cell4.textContent = result.submitted_by;
+
+						// Clear cell4
+						cell5.innerHTML = '';
+						
+						// Show YouTube link + copy button if success
+						if (result.youtube_link && result.youtube_link !== 'Upload Failed') {
+							const link = document.createElement('a');
+							link.href = result.youtube_link;
+							link.textContent = 'Watch Video';
+							link.target = '_blank';
+							cell5.appendChild(link);
+
+							const copyBtn = document.createElement('div');
+							copyBtn.textContent = '📋';
+							copyBtn.className = 'clipboard-button';
+							copyBtn.title = 'Copy link';
+							copyBtn.onclick = () => {
+								navigator.clipboard.writeText(result.youtube_link)
+									.then(() => {
+										// Change icon to ✅ temporarily
+										copyBtn.textContent = '✅';
+										setTimeout(() => {
+											copyBtn.textContent = '📋';
+                                    }, 1500);
+                                })
+                                .catch(err => console.error('Copy failed', err));
+                        };
+                        cell5.appendChild(copyBtn);
+                    } else {
+						const failedText = document.createElement('span');
+						failedText.textContent = 'Upload Failed';
+						cell5.appendChild(failedText);
+						
+						
+						// Upload failed: show retry button
+						const retryBtn = document.createElement('div');
+						retryBtn.textContent = '🔄';
+						retryBtn.className = 'retry-button';
+						retryBtn.title = 'Retry upload';
+						retryBtn.onclick = () => retryUpload(result.suspect_steam_id); // send Steam ID
+						cell5.appendChild(retryBtn);
+						// Just show failed text
+                    //  cell5.textContent = 'Upload Failed';
+                    //}
+					};
+				});	
+
+                } else {
+                    const row = resultsBody.insertRow(0);
+                    const cell = row.insertCell(0);
+                    cell.colSpan = 5;
+                    cell.textContent = 'No completed jobs yet.';
+                    cell.style.textAlign = 'center';
+                }
+
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+            }
+        }
+
+        // Handle single form submission
+        document.getElementById('demo-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const formMessage = document.getElementById('form-message');
+            try {
+                const response = await fetch('/add_demo', { method: 'POST', body: formData });
+                const result = await response.json();
+                formMessage.textContent = result.message;
+                formMessage.className = result.success ? 'success' : 'error';
+                if (result.success) this.reset();
+            } catch (error) {
+                formMessage.textContent = 'An error occurred.';
+                formMessage.className = 'error';
+            }
+            updateStatus();
+        });
+
+        // Handle bulk form submission
+        document.getElementById('bulk-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const bulkData = document.getElementById('bulk_data').value;
+            const formMessage = document.getElementById('bulk-form-message');
+            const lines = bulkData.split('\n').filter(line => line.trim() !== '');
+            const jobs = lines.map(line => {
+                const parts = line.split(',').map(part => part.trim());
+                if (parts.length === 3) return { share_code: parts[0], suspect_steam_id: parts[1], submitted_by: parts[2] };
+                return null;
+            }).filter(job => job !== null);
+
+            if (jobs.length === 0) {
+                formMessage.textContent = 'No valid jobs found.';
+                formMessage.className = 'error';
+                return;
+            }
+
+            try {
+                const response = await fetch('/add_bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jobs)
+                });
+                const result = await response.json();
+                formMessage.textContent = result.message;
+                formMessage.className = result.success ? 'success' : 'error';
+                if (result.success) document.getElementById('bulk_data').value = '';
+            } catch (error) {
+                formMessage.textContent = 'An error occurred.';
+                formMessage.className = 'error';
+            }
+            updateStatus();
+        });
+
+        setInterval(updateStatus, 30000);
+        updateStatus();
+    </script>
+</body>
+</html>

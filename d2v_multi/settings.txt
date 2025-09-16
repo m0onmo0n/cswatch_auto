@@ -1,0 +1,17 @@
+# settings file
+
+# Path where recorded videos are stored before upload. should match the video path in config.ini [Paths]->output_folder.
+# e.g E:\cswatch_auto\obs_videos
+UPLOAD_DIR=
+
+# Logging directory. Leave blank to use "logs" in the project folder.
+LOG_DIR= 
+
+# Path to your csdm-fork directory.
+# Leave blank to use the one bundled with the project.
+CSDM_PROJECT_PATH=
+
+# Path where demo files will be downloaded.
+# default: E:\cswatch_auto\demos
+# Leave blank to default inside the csdm-fork/demos folder.
+DEMOS_FOLDER=

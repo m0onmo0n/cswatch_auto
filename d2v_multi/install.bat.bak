@@ -1,0 +1,78 @@
+@echo off
+CLS
+echo =================================================================
+echo == CS Demo Processor - Prerequisite Checker & Installer        ==
+echo =================================================================
+echo.
+echo This script will check for required software (Python, Node.js)
+echo and then install all necessary dependencies.
+echo.
+
+:: --- Check for Python ---
+echo [1/5] Checking for Python...
+python --version >nul 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo ERROR: Python is not installed or not added to your system's PATH.
+    echo Please install Python 3.7+ from https://www.python.org/downloads/
+    echo IMPORTANT: During installation, make sure to check the box that says "Add Python to PATH".
+    echo.
+    pause
+    exit /b
+)
+echo Python found.
+echo.
+
+:: --- Check for Node.js ---
+echo [2/5] Checking for Node.js...
+node --version >nul 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo ERROR: Node.js is not installed or not added to your system's PATH.
+    echo Please install Node.js from https://nodejs.org/
+    echo.
+    pause
+    exit /b
+)
+echo Node.js found.
+echo.
+
+echo Press any key to begin the dependency installation...
+pause > nul
+echo.
+
+:: --- Install Python Dependencies ---
+echo [3/5] Installing Python dependencies...
+pip install -r requirements.txt
+echo Python dependencies installed.
+echo.
+
+:: --- Install Node.js Dependencies ---
+echo [4/5] Installing CS Demo Manager dependencies...
+echo Navigating to the csdm-fork directory...
+cd csdm-fork
+IF %ERRORLEVEL% NEQ 0 (
+    echo ERROR: The 'csdm-fork' directory was not found.
+    echo Please ensure your modified CSDM project is placed inside a folder named 'csdm-fork'.
+    pause
+    exit /b
+)
+
+echo Running 'npm install'... (This may take several minutes)
+npm install
+echo CS Demo Manager dependencies installed.
+cd ..
+echo.
+
+:: --- Run Interactive Setup ---
+echo [5/5] Starting interactive configuration setup...
+echo.
+python setup.py
+
+echo.
+echo =================================================================
+echo == Installation and configuration are complete!              ==
+echo == Please follow the final instructions in the README file.  ==
+echo =================================================================
+echo.
+pause

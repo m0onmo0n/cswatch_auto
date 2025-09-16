@@ -1,0 +1,189 @@
+import sys
+import os
+import configparser
+import logging
+import time
+import threading
+
+import csdm_cli_handler
+import youtube_uploader
+import demo_downloader
+from obs_recorder import OBSRecorder
+from web_server import (
+    prep_queue, record_queue, upload_queue,
+    status_prep, status_record, status_upload,
+    completed_jobs, run_web_server, save_results
+)
+
+def setup_logging():
+    log_dir = 'logs'
+    os.makedirs(log_dir, exist_ok=True)
+    log_filename = f"csdm_processor_{time.strftime('%Y-%m-%d_%H-%M-%S')}.log"
+    log_filepath = os.path.join(log_dir, log_filename)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_filepath, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
+def prep_worker(config):
+    """Worker for Stage 1: Download and Analyze Demos."""
+    logging.info("Prep worker started.")
+    try:
+        csdm_project_path = os.path.join(os.getcwd(), 'csdm-fork')
+        demos_folder = os.path.join(csdm_project_path, 'demos')
+        os.makedirs(demos_folder, exist_ok=True)
+        if not os.path.isdir(csdm_project_path):
+            raise FileNotFoundError("The 'csdm-fork' directory was not found.")
+    except (KeyError, FileNotFoundError) as e:
+        logging.error(f"Prep worker configuration error: {e}")
+        return
+
+    while True:
+        job = prep_queue.get()
+        suspect_id = job['suspect_steam_id']
+        status_prep.update({"status": "Processing", "step": f"Downloading for {suspect_id}"})
+        
+        try:
+            share_code = demo_downloader.parse_share_code(job['share_code'])
+            if not share_code:
+                raise ValueError("Invalid share code.")
+            
+            demo_path = demo_downloader.download_demo(share_code, demos_folder)
+            if not demo_path:
+                raise RuntimeError("Failed to download demo.")
+            
+            status_prep.update({"status": "Processing", "step": f"Analyzing for {suspect_id}"})
+            if not csdm_cli_handler.analyze_demo(csdm_project_path, demo_path):
+                raise RuntimeError("Demo analysis failed.")
+            
+            record_job = {**job, "demo_path": demo_path}
+            record_queue.put(record_job)
+            logging.info(f"Prep successful for {suspect_id}. Added to record queue.")
+
+        except Exception as e:
+            logging.error(f"Prep stage failed for {suspect_id}: {e}")
+        
+        finally:
+            time.sleep(5)
+            status_prep.update({"status": "Idle", "step": "Waiting for demos..."})
+            prep_queue.task_done()
+
+def record_worker(config):
+    """Worker for Stage 2: Record Highlights."""
+    logging.info("Record worker started.")
+    try:
+        csdm_project_path = os.path.join(os.getcwd(), 'csdm-fork')
+        if not os.path.isdir(csdm_project_path):
+            raise FileNotFoundError("The 'csdm-fork' directory was not found.")
+        obs_host = config['OBS']['host']
+        obs_port = int(config['OBS']['port'])
+    except (KeyError, FileNotFoundError) as e:
+        logging.error(f"Record worker configuration error: {e}")
+        return
+        
+    obs = OBSRecorder(host=obs_host, port=obs_port)
+
+    while True:
+        job = record_queue.get()
+        suspect_id = job['suspect_steam_id']
+        status_record.update({"status": "Processing", "step": f"Recording for {suspect_id}"})
+        
+        try:
+            obs.connect()
+            if not obs.is_connected:
+                raise RuntimeError("Could not connect to OBS.")
+
+            obs.start_recording()
+            
+            highlights_process = csdm_cli_handler.start_highlights(csdm_project_path, job['demo_path'], suspect_id)
+            if not highlights_process:
+                raise RuntimeError("Failed to launch highlights.")
+
+            # UPDATED: The waiting logic now also monitors the highlights_process for early exit.
+            if not csdm_cli_handler.wait_for_cs2_to_close(highlights_process):
+                raise RuntimeError("CS2 did not launch or timed out.")
+
+            obs.stop_recording()
+            logging.info("Waiting 3 seconds for OBS to save the video file...")
+            time.sleep(3)
+
+            upload_job = {**job}
+            upload_queue.put(upload_job)
+            logging.info(f"Recording successful for {suspect_id}. Added to upload queue.")
+
+        except Exception as e:
+            logging.error(f"Record stage failed for {suspect_id}: {e}")
+            if obs.is_recording:
+                obs.stop_recording()
+        
+        finally:
+            if obs.is_connected:
+                obs.disconnect()
+            csdm_cli_handler.force_close_cs2()
+            status_record.update({"status": "Idle", "step": "Waiting for prepped demos..."})
+            record_queue.task_done()
+
+def upload_worker(config):
+    """Worker for Stage 3: Upload to YouTube."""
+    logging.info("Upload worker started.")
+    try:
+        output_folder = config['Paths']['output_folder']
+    except KeyError as e:
+        logging.error(f"Upload worker configuration error: {e}")
+        return
+
+    while True:
+        job = upload_queue.get()
+        suspect_id = job['suspect_steam_id']
+        status_upload.update({"status": "Processing", "step": f"Uploading for {suspect_id}"})
+        
+        youtube_link = "Upload Failed"
+        try:
+            files = [os.path.join(output_folder, f) for f in os.listdir(output_folder) if f.endswith('.mp4')]
+            if not files:
+                raise FileNotFoundError("No .mp4 files found.")
+            
+            latest_file = max(files, key=os.path.getctime)
+            logging.info(f"Latest recording found: {latest_file}")
+            
+            video_title = f"Suspected Cheater: {suspect_id} - Highlights"
+            link = youtube_uploader.upload_video(latest_file, video_title)
+            
+            if link:
+                youtube_link = link
+                logging.info("Upload complete!")
+            else:
+                raise RuntimeError("Upload failed to return a URL.")
+
+        except Exception as e:
+            logging.error(f"Upload stage failed for {suspect_id}: {e}")
+        
+        finally:
+            completed_jobs.append({
+                "suspect_steam_id": suspect_id,
+                "share_code": job['share_code'],
+                "youtube_link": youtube_link,
+                "submitted_by": job.get('submitted_by', 'N/A')
+            })
+            save_results()
+            status_upload.update({"status": "Idle", "step": "Waiting for recorded videos..."})
+            upload_queue.task_done()
+
+
+if __name__ == '__main__':
+    setup_logging()
+    
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+
+    # --- Start all worker threads ---
+    threading.Thread(target=prep_worker, args=(config,), daemon=True, name="PrepWorker").start()
+    threading.Thread(target=record_worker, args=(config,), daemon=True, name="RecordWorker").start()
+    threading.Thread(target=upload_worker, args=(config,), daemon=True, name="UploadWorker").start()
+
+    logging.info("Starting web server on http://localhost:5001")
+    run_web_server()
