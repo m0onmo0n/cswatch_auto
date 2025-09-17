@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> EVERYTHING is currently broken cuz valve
+
 # CS Demo Processor
 ⚠️⚠️⚠️⚠️ This repo is currently untested on a new system and the launch_d2v.bat or the run_multi.bat/multi threaded processor dosen't work as it should(gives more error than necessary) ⚠️⚠️⚠️⚠️
 
