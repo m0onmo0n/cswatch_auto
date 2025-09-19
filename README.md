@@ -1,5 +1,8 @@
-> [!IMPORTANT]
+> [!WARNING]
 > EVERYTHING is currently broken cuz valve
+
+> [!TIP]
+> the csdm submodule isn't updated yet; you can still download it and pull the updated csdm-fork repo [here](https://github.com/m0onmo0n/csdm-fork)
 
 # CS Demo Processor
 ⚠️⚠️⚠️⚠️ This repo is currently untested on a new system and the launch_d2v.bat or the run_multi.bat/multi threaded processor dosen't work as it should(gives more error than necessary) ⚠️⚠️⚠️⚠️
