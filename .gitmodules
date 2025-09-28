@@ -6,3 +6,7 @@
 	path = csdm-fork
 	url = https://github.com/m0onmo0n/csdm-fork.git
 	branch = main
+[submodule "d2v_multi"]
+	path = d2v_multi
+	url = https://github.com/m0onmo0n/Pipelining-Demo2Video-m0onmo0n.git
+	branch = aio
