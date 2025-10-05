@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 9,
+  "autoDownloadUpdates": true,
+  "database": {
+    "hostname": "csdm.xify.pro",
+    "port": 8432,
+    "username": "csdm",
+    "password": "join discord for password",
+    "database": "csdm"
+  },
+  "playback": {
+    "width": 1280,
+    "height": 720,
+    "closeGameAfterHighlights": true,
+    "fullscreen": false,
+    "useCustomHighlights": true,
+    "useCustomLowlights": true,
+    "highlights": {
+      "beforeKillDelayInSeconds": 5,
+      "afterKillDelayInSeconds": 5,
+      "includeDamages": true
+    },
+    "lowlights": {
+      "beforeKillDelayInSeconds": 5,
+      "afterKillDelayInSeconds": 2,
+      "includeDamages": false
+    },
+    "round": {
+      "beforeRoundDelayInSeconds": 0,
+      "afterRoundDelayInSeconds": 2
+    },
+    "launchParameters": "-insecure +novid engine_no_focus_sleep 0 -allow-third-party-software +cl_crosshair_recoil 1 +volume 0.1",
+    "useHlae": false,
+    "playerVoicesEnabled": true,
+    "cs2": {
+      "executablePath": "E:\\Games\\steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64\\cs2.exe"
+    }
+  }
+}
+
