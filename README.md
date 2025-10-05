@@ -63,7 +63,11 @@ cswatch_auto/
 > ## How to download:
 > you're gonna need to use either powershell or the app "terminal" located [here](https://github.com/microsoft/terminal)
 > To download, you'll need to clone it from github, easiest way is by using the desktop github app (`winget install GitHub.GitHubDesktop` or `https://gitforwindows.org/` )
-> then you need to clone the repo (`https://github.com/m0onmo0n/cswatch_auto`) into a folder named `cswatch_auto` and you're done.
+> then you need to clone the repo (`https://github.com/m0onmo0n/cswatch_auto`) and fetch the submodules
+
+`git clone https://github.com/m0onmo0n/cswatch_auto.git cswatch_auto` & within the cswatch_auto folder you do `git submodule update --init --recursive`
+
+
 
 ## First-time setup (Windows)
 
