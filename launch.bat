@@ -1,94 +1,121 @@
 @echo off
 setlocal EnableExtensions
-title Demo2Video Launcher
-CLS
-echo =================================================================
-echo == CS Demo Processor - Application Launcher                  ==
-echo =================================================================
-echo.
 
+rem --------------------------------------------------------------
+rem  Demo2Video Launcher
+rem --------------------------------------------------------------
+
+rem Resolve the folder that contains this .bat file
 set "ROOT=%~dp0"
 for %%I in ("%ROOT%") do set "ROOT=%%~fI"
 
-
-
+rem ----------------------------------------------------------------
+rem  Show the menu – the script will exit once a choice is made
+rem ----------------------------------------------------------------
 :menu
 cls
 echo ==================================================
-echo                 Demo2Video Launcher
+echo          Demo2Video Launcher
 echo ==================================================
 echo   [M] D2V Multi (pipelined)
 echo   [S] D2V Single (classic)
 echo   [Q] Quit
 echo.
+
 choice /C MSQ /N /M "Select: "
 set "sel=%errorlevel%"
 
 if "%sel%"=="3" goto :end
-
 if "%sel%"=="1" (
-  if exist "%ROOT%d2v_multi" (
-    goto :multi
-  ) else (
-    echo [ERROR] error & pause
-  )
-) else if "%sel%"=="2" (
-  if exist "%ROOT%d2v_single" (
-    goto :single
-  ) else (
-    echo [ERROR] error & pause
-  )
-) else (
-  echo Unexpected selection. & timeout /t 1 >nul
+    if exist "%ROOT%d2v_multi" (
+        goto :multi
+    ) else (
+        echo [ERROR] d2v_multi folder missing & pause
+        goto :menu
+    )
 )
+if "%sel%"=="2" (
+    if exist "%ROOT%d2v_single" (
+        goto :single
+    ) else (
+        echo [ERROR] d2v_single folder missing & pause
+        goto :menu
+    )
+)
+
+rem If we get here something went wrong – loop back to the menu
 goto :menu
 
 
+rem ----------------------------------------------------------------
+rem  MULTI mode
+rem ----------------------------------------------------------------
 :multi
-:: --- Start OBS ---
+rem ---- OBS (no console needed) ---------------------------------
 echo [1/4] Starting OBS...
-start "OBS" cmd /c ".\obs64.exe.lnk" 
-timeout /t 3
-:: --- Start the CSDM Node.js development server ---
+start "" "%ROOT%obs64.exe.lnk"
+timeout /t 3 >nul
+
+rem ---- CSDM dev server (keep console open for logs) ----------
 echo [2/4] Starting the CS Demo Manager dev server...
-start "CSDM Dev Server" cmd /c "cd csdm-fork && node scripts/develop-cli.mjs"
+start "CSDM Dev Server" ^
+      /D "%ROOT%csdm-fork" ^
+      cmd /k "node scripts/develop-cli.mjs"
 
-:: --- Start the main Python application (web server and worker) ---
+rem ---- D2V multi Python app (keep console open for logs) ------
 echo [3/4] Starting the main Python application...
-start "d2v multi" cmd /c "cd d2v_multi &% python main.py"
+start "D2V Multi" ^
+      /D "%ROOT%d2v_multi" ^
+      cmd /k "python main.py"
 
-:: --- Wait for the server to initialize ---
+rem ---- Give the web server a moment to start -------------------
 echo [4/4] Waiting 10 seconds for the web server to start...
-timeout /t 10 /nobreak > nul
+timeout /t 10 /nobreak >nul
 
-:: --- Open the web interface in the default browser ---
+rem ---- Open the web UI -----------------------------------------
 echo Launching web interface in your browser...
-start http://localhost:5001
-goto :menu
+start "" "http://localhost:5001"
 
+rem Exit the launcher – the menu window disappears
+goto :end
+
+
+rem ----------------------------------------------------------------
+rem  SINGLE mode
+rem ----------------------------------------------------------------
 :single
-:: --- Start OBS ---
+rem ---- OBS (no console needed) ---------------------------------
 echo [1/4] Starting OBS...
-start "OBS" cmd /c ".\obs64.exe.lnk" 
-timeout /t 3
-:: --- Start the CSDM Node.js development server ---
+start "" "%ROOT%obs64.exe.lnk"
+timeout /t 3 >nul
+
+rem ---- CSDM dev server (keep console open for logs) ----------
 echo [2/4] Starting the CS Demo Manager dev server...
-start "CSDM Dev Server" cmd /c "cd csdm-fork && node scripts/develop-cli.mjs"
+start "CSDM Dev Server" ^
+      /D "%ROOT%csdm-fork" ^
+      cmd /k "node scripts/develop-cli.mjs"
 
-:: --- Start the main Python application (web server and worker) ---
+rem ---- D2V single Python app (keep console open for logs) -----
 echo [3/4] Starting the main Python application...
-start "d2v single" cmd /c "cd d2v_single &% python main.py"
+start "D2V Single" ^
+      /D "%ROOT%d2v_single" ^
+      cmd /k "python main.py"
 
-:: --- Wait for the server to initialize ---
+rem ---- Give the web server a moment to start -------------------
 echo [4/4] Waiting 10 seconds for the web server to start...
-timeout /t 10 /nobreak > nul
+timeout /t 10 /nobreak >nul
 
-:: --- Open the web interface in the default browser ---
+rem ---- Open the web UI -----------------------------------------
 echo Launching web interface in your browser...
-start http://localhost:5001
-goto :menu
+start "" "http://localhost:5001"
+
+rem Exit the launcher
+goto :end
 
 
+rem ----------------------------------------------------------------
+rem  Clean shutdown
+rem ----------------------------------------------------------------
 :end
 endlocal
 exit /b 0
